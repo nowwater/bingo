@@ -24,7 +24,7 @@
 #define Q 81
 #define BUF_SIZE 1024
 
-int Board[20][12] = {//첫번째 판 초기화화
+/*int Board[20][12] = {//첫번째 판 초기화
 		{1,1,1,1,1,1,1,1,1,1,1,1},
 		{1,0,0,0,0,0,0,0,0,0,0,1},
 		{1,0,0,0,0,0,0,0,0,0,0,1},
@@ -46,6 +46,59 @@ int Board[20][12] = {//첫번째 판 초기화화
 		{1,0,0,0,0,0,0,0,0,0,0,1},
 		{1,1,1,1,1,1,1,1,1,1,1,1}
 };
+*/
+
+int board_p1[5][5];
+int board_p2[5][5];
+//board of each person
+
+//int titlename[10][60] =
+//{
+//	{1,1,1,1,1,1,1,1,0,0,0,0,1,1,1,1,1,1,1,1,0,0,0,1,1,0,0,0,0,0,0,0,1,1,0,0,0,0,0,1,1,1,1,1,0,0,0,0,0,0,0,0,1,1,1,1,1,1,0,0},
+//	{1,1,1,1,1,1,1,1,1,0,0,0,1,1,1,1,1,1,1,1,0,0,0,1,1,1,0,0,0,0,0,0,1,1,0,0,0,0,1,1,1,1,1,1,1,1,0,0,0,0,0,1,1,1,1,1,1,1,1,0},
+//	{1,1,0,0,0,0,0,1,1,0,0,0,0,0,0,1,1,0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,1,1,0,0,0,0,1,1,0,0,0,0,1,1,1,0,0,0,0,1,1,0,0,0,0,1,1,0},
+//	{1,1,0,0,0,0,1,1,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,1,1,0,1,1,0,0,0,0,1,1,0,0,0,1,1,0,0,0,0,0,0,1,1,0,0,0,1,1,0,0,0,0,0,0,1,1},
+//	{1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,1,1,0,0,1,1,0,0,0,1,1,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,1,1},
+//	{1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,1,1,0,0,0,1,1,0,0,1,1,0,0,0,1,1,0,0,0,1,1,1,1,1,0,0,0,1,1,0,0,0,0,0,0,1,1},
+//	{1,1,0,0,0,0,0,1,1,0,0,0,0,0,0,1,1,0,0,0,0,0,0,1,1,0,0,0,0,1,1,0,1,1,0,0,0,1,1,1,0,0,1,1,1,1,1,0,0,0,1,1,0,0,0,0,0,0,1,1},
+//	{1,1,0,0,0,0,0,1,1,0,0,0,0,0,0,1,1,0,0,0,0,0,0,1,1,0,0,0,0,0,1,1,1,1,0,0,0,0,1,1,0,0,0,0,1,1,1,0,0,0,0,1,1,0,0,0,0,1,1,0},
+//	{1,1,1,1,1,1,1,1,0,0,0,0,1,1,1,1,1,1,1,1,0,0,0,1,1,0,0,0,0,0,0,1,1,1,0,0,0,0,1,1,1,1,1,1,1,1,0,0,0,0,0,1,1,1,1,1,1,1,1,0},
+//	{1,1,1,1,1,1,1,1,0,0,0,0,1,1,1,1,1,1,1,1,0,0,0,1,1,0,0,0,0,0,0,0,1,1,0,0,0,0,0,1,1,1,1,1,1,1,0,0,0,0,0,0,1,1,1,1,1,1,0,0},
+//};
+
+int titlename[5][31] =
+{
+	{1,1,1,1,0,0,0,1,1,1,0,0,1,0,0,0,1,0,0,0,1,1,1,0,0,0,0,1,1,1,0},
+	{1,0,0,0,1,0,0,0,1,0,0,0,1,1,0,0,1,0,0,1,0,0,0,1,0,0,1,0,0,0,1},
+	{1,1,1,1,0,0,0,0,1,0,0,0,1,0,1,0,1,0,0,1,0,0,0,0,0,0,1,0,0,0,1},
+	{1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,1,1,0,0,1,0,1,1,1,0,0,1,0,0,0,1},
+	{1,1,1,1,0,0,0,1,1,1,0,0,1,0,0,0,1,0,0,0,1,1,1,0,0,0,0,1,1,1,0}
+};
+
+int board_picture[22][32] =
+{
+	{1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1},
+	{1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,1},
+	{1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,1},
+	{1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,1},
+	{1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1},
+	{1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,1},
+	{1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,1},
+	{1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,1},
+	{1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1},
+	{1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,1},
+	{1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,1},
+	{1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,1},
+	{1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1},
+	{1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,1},
+	{1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,1},
+	{1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,1},
+	{1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1},
+	{1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,1},
+	{1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,1},
+	{1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,1},
+	{1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1}
+};
 
 
 //function for  title screen
@@ -55,9 +108,11 @@ void explan_mode(int, int);
 void quit_mode(int, int);
 
 //function for play, explanation, quit
-void play();
+void play(int, int);
 void explan();
+void end_game();
 
+//시작 높이 y=5, x=22
 int main()
 {
 	setlocale(LC_CTYPE, "ko_KR.utf-8");
@@ -70,14 +125,37 @@ int main()
 
 void title()
 {
+	//char rec[] = "■";
 	int ch, cnt=1;
 	int y,x,i,j;
-	getmaxyx(stdscr, y, x);
-	keypad(stdscr, TRUE);
+	//getmaxyx(stdscr, y, x);//get screensize
+	y = 5;
+	x = 26;
+	keypad(stdscr, TRUE);//can get keypad
 	noecho();
 
-	curs_set(0);
+	curs_set(0);//make cursor invisible
 	
+	clear();
+
+	for (i = 0; i < 5; i++)
+	{
+		move(y+i, x);
+
+		for (j = 0; j < 31; j++)
+		{
+			if (titlename[i][j] == 1)
+				addch('@');
+			else
+				addch(' ');
+		}
+	}
+	
+	mvprintw(19, x-2, "**Made by Korean Bingo Association**");
+	mvprintw(22, x-13, "HD.Lee 2016114965  HS.Kwon 2016115613  JH.Shin 2017112110");
+
+	refresh();
+
 	game_mode(y,x);
 	
 	while(1)
@@ -118,41 +196,40 @@ void title()
 	switch(cnt)
 	{
 		case 1:
-			play();
+			play(y,x);
 			break;
 		case 2:
 			explan();
 			break;
 		case 3:
-			endwin();
+			end_game();		
 	}
-
-	endwin();
+	title();
 }
 
 void game_mode(int y, int x)
 {
 	standend();
-	mvprintw(y/2,(x/3)+17,     "*******************************");
+	mvprintw(y+6, x,    "*******************************");
 	standout();
-	mvprintw((y/2)+1, (x/3)+17,"           Start Game          ");
+	mvprintw(y+7,x,     "           Start Game          ");
 	standend();
-	mvprintw((y/2)+2, (x/3)+17,"           Game  Rule          ");
-	mvprintw((y/2)+3, (x/3)+17,"              Exit             ");
-	mvprintw((y/2)+4,(x/3)+17, "*******************************");
+	mvprintw(y + 8, x,  "           Game  Rule          ");
+	mvprintw(y + 9, x,  "              Exit             ");
+	mvprintw(y + 10, x, "*******************************");
 	refresh();
 }
 
 void explan_mode(int y, int x)
 {
 	standend();
-	mvprintw(y/2,(x/3)+17,     "*******************************");
-	mvprintw((y/2)+1, (x/3)+17,"           Start Game          ");
+	mvprintw(y + 6, x, "*******************************");
+	mvprintw(y + 7, x, "           Start Game          ");
 	standout();
-	mvprintw((y/2)+2, (x/3)+17,"           Game  Rule          ");
+	mvprintw(y + 8, x, "           Game  Rule          ");
 	standend();
-	mvprintw((y/2)+3, (x/3)+17,"              Exit             ");
-	mvprintw((y/2)+4,(x/3)+17, "*******************************");
+	mvprintw(y + 9, x, "              Exit             ");
+	mvprintw(y + 10, x,"*******************************");
 	refresh();
 }
 
@@ -160,35 +237,33 @@ void explan_mode(int y, int x)
 void quit_mode(int y, int x)
 {
 	standend();
-	mvprintw(y/2,(x/3)+17,     "*******************************");
-	mvprintw((y/2)+1, (x/3)+17,"           Start Game          ");
-	mvprintw((y/2)+2, (x/3)+17,"           Game  Rule          ");
+	mvprintw(y + 6, x, "*******************************");
+	mvprintw(y + 7, x, "           Start Game          ");
+	mvprintw(y + 8, x, "           Game  Rule          ");
 	standout();
-	mvprintw((y/2)+3, (x/3)+17,"              Exit             ");
+	mvprintw(y + 9, x, "              Exit             ");
 	standend();
-	mvprintw((y/2),(x/3)+17,    "*******************************");
+	mvprintw(y + 10, x,"*******************************");
 	refresh();
 }
 
-void play()
+void explan()
 {
-}
-
-void explan(int y, int x)
-{
-	int pointx=x/3;
-	int pointy=y/3;
+	int pointy = 6;
+	int pointx = 18;
 	int ch;
 
 	clear();
+	refresh();
 
-	mvprintw(pointy, pointx,    "This is a BINGO GAME!");
-	mvprintw(pointy+1, pointx, "1. Make a bingo board with pressing a number key." );
-	mvprintw(pointy+2, pointx, "2. Put a number one by one." );
-	mvprintw(pointy+3, pointx, "3. If you make 3 lines first, you WIN." );
-	mvprintw(pointy+4, pointx, "4. Just play it now!");
-	
-	mvprintw(3*y/4, pointx-17, "Go back : q");
+	mvprintw(pointy+1, pointx, "      This is a BINGO GAME by 2 people!!!       ");
+	mvprintw(pointy+3, pointx, "1. Make a bingo board with pressing a number key." );
+	mvprintw(pointy+5, pointx, "2. Put a number one by one." );
+	mvprintw(pointy+7, pointx, "3. If you make 3 lines first, you WIN." );
+	mvprintw(pointy+9, pointx, "4. Just play it now!");
+	refresh();
+
+	mvprintw(LINES-2, 60, "Go back : q");
 	refresh();
 
 	while(1)
@@ -197,9 +272,69 @@ void explan(int y, int x)
 
 		if (ch == 'q' || ch == 'Q')
 		{
-			title();
+			return;
 		}
-
 	}
 	
+}
+
+void end_game()
+{
+	endwin();
+	exit(1);
+}
+
+void play(int y, int x)
+{
+	int ch;
+	int startY=1;
+	int startX=3;
+	int letterX;
+	int letterY;
+	int i, j;
+	char str[10];
+
+	clear();
+	refresh();
+	
+	mvprintw(startY,startX, "     Make your own board!");
+	refresh();	
+	
+	mvprintw(LINES - 2, 60, "Go back : q");
+	refresh();
+
+	for (i = 0; i<22; i++)
+	{
+		move(startY + 2 + i, startX);
+		for (j = 0; j < 32; j++)
+		{
+			if (board_picture[i][j] == 0)
+				addch(' ');
+			else if (board_picture[i][j] == 1)
+				addch('|');
+			else
+				addch('-');
+		}
+	}
+	refresh();
+
+	letterY = startY + 5;
+	letterX = startX+34;
+
+	mvprintw(letterY, letterX, "Press a number(1~50) : ");
+	refresh();
+
+	move(letterY, letterX+23);
+	curs_set(1);
+	refresh();
+
+	while (1)
+	{
+		ch = getch();
+
+		if (ch == 'q' || ch == 'Q')
+		{
+			return;
+		}
+	}
 }
