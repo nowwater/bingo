@@ -1,9 +1,0 @@
-1. start game
-2. game explanation
-3. access
-4. start game really
-5. bingo board
-6. make board
-7. say a number one by one
-8. win, lose
-9. finish
