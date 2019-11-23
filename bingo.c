@@ -317,12 +317,21 @@ void display_board(int startX, int startY)
 }
 int input_number(int letterX, int letterY)
 {
-	int row, col,int_num;
+	int row, col,int_num,int_num1,int_num2;
 	char num1,num2;
 	curs_set(1);
 	echo(); // getch() 로 받아야함
 	mvscanw(letterY + 4, letterX, "%d %d %c%c", &row, &col, &num1,&num2);
-	int_num = num1 - '0';
+	int_num1 = num1 - '0';
+	if(num2>=48&&num2<=57)
+		{
+		int_num2 = num2-'0';
+		int_num = int_num1*10+int_num2;
+		}
+	else
+		{
+		int_num = int_num1;
+		}
 	// if(row == 81 || row == 113) // if the character 'q' or 'Q'
 	// q나 Q 눌렀을 때 SIGARLM 보내서 종료시키게 만들기
 	if (check_double_number[int_num])
@@ -338,8 +347,10 @@ int input_number(int letterX, int letterY)
 	{
 		check_double_number[int_num] = int_num;
 		board_number[row+1][col+1] = num1; //We dont consider the 0th row and col.
-		if(num2!='\0')
+		if(num2>=48&&num2<=57)
 			board_secondnumber[row+1][col+1] = num2;
+		else
+			board_secondnumber[row+1][col+1] =' ';
 		mvprintw(letterY + 4, letterX, "                "); // erase the input field
 		refresh();
 		return 0; // success
