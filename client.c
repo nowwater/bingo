@@ -67,9 +67,7 @@ int main(int argc, char *argv[])
 	//stage 2. connect
 	if(connect(sock,(struct sockaddr*)&serv_adr, sizeof(serv_adr))==-1)
 		error_handling("connect() error!");
-	else
-		puts("Connected success! Bingo game start.");
-	
+
 	nfds = sock+1;
 	FD_ZERO(&read_fds);
 
@@ -96,22 +94,30 @@ int main(int argc, char *argv[])
 			if((size = recv(sock,recvmessage,BUF_SIZE,0))>0)
 			{
 				recvmessage[size] = '\0';
-				printf("%s \n",recvmessage);
+				if(strncmp(recvmessage,"game start!\n",strlen(recvmessage))==0)
+					puts("BINGO PAN PLEASE~");
+				else
+					printf("%s \n",recvmessage);
+				
 			}
 			else
 			{
 				error_handling("recieve error!");
 			}
 		}
-		//enroll the player name in server
-		if(cnt==0)
-		{
-			send(sock,player_name,strlen(player_name),0);
-			cnt++;
-		}
 		
 		if(FD_ISSET(0,&read_fds))
 		{
+
+
+
+
+
+
+
+
+
+
 			if(fgets(sendmessage,BUF_SIZE,stdin)!=NULL)
 			{
 				size = strlen(sendmessage);
@@ -129,6 +135,7 @@ int main(int argc, char *argv[])
 					exit(1);
 				}
 			}
+		
 		}
 
 	} 

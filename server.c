@@ -28,15 +28,18 @@ char *escapechar2 = "Q\n";
 int main(int argc, char* argv[])
 {
 	int serv_sock,clnt_sock;
-	char *start = "Welcome to bingo game!\n";
+	char *start = "Connected successfully! Please wait for another users.\n";
+	char *startgame = "game start!\n";
 	char message[BUF_SIZE];
 	int str_len,i,j;
-	fd_set read_fds;
+	fd_set read_fds,cpyReads;
 	int num_chat = 0;
+	struct timeval timeout;
 	struct sockaddr_in serv_adr,clnt_adr;
 	//socket address of server and client 
 	int nfds;
  	int n;
+	int Changedfd;
 
 	socklen_t clnt_adr_sz;
 
@@ -62,7 +65,7 @@ int main(int argc, char* argv[])
 		error_handling("bind() error");
 	
 	//stage3. listen
-	if(listen(serv_sock,3)==-1)
+	if(listen(serv_sock,5)==-1)
 		error_handling("listen() error");
 	
 	clnt_adr_sz = sizeof(clnt_adr);
@@ -73,92 +76,54 @@ int main(int argc, char* argv[])
 	FD_ZERO(&read_fds);
 
 	
-	while(1)
+	do
 	{
+      	        //stage3.5 select       
+		if((num_chat-1)>=0)
+			nfds = players[num_chat-1].client_s+1;
+
+		FD_SET(serv_sock,&read_fds);
+
+		for(i=0;i<num_chat;i++)
+			FD_SET(players[i].client_s,&read_fds);
+		if(select(nfds,&read_fds,(fd_set*)0,(fd_set*)0,(struct timeval*)0)<0)
+			error_handling("select() error");
 	
-	//add new players => new nfds(==maximum socket number)
-	if((num_chat-1)>=0) 
-		nfds = players[num_chat-1].client_s+1;
+       		 //stage4.accept(for multiple clients)
+        	if(FD_ISSET(serv_sock,&read_fds))
+       		{
+                clnt_adr_sz = sizeof(clnt_adr);
+                clnt_sock = accept(serv_sock, (struct sockaddr*)&clnt_adr, &clnt_adr_sz);
 
-        //assign socket number for recogizing the change of message in fd_set
-	FD_SET(serv_sock,&read_fds);
+                if(clnt_sock !=-1)
+               		 {	
+                        //add for the new client(player)
+                        players[num_chat++].client_s = clnt_sock;
+
+                        //send welcome messge to connected clients
+                        send(clnt_sock,start,strlen(start),0);
+
+                        printf("%dth player connected.\n",num_chat);
+                	}
+        	}
+	}while(num_chat<3);	
 
 
-	for(i=0;i<num_chat;i++)
-		FD_SET(players[i].client_s,&read_fds);
-	
-	//stage3.5 select	
-	if(select(nfds,&read_fds,(fd_set*)0,(fd_set*)0,(struct timeval*)0)<0)
-	{
-		error_handling("select() error!");
-	}
-
-
-	//stage4.accept(for multiple clients)
-	if(FD_ISSET(serv_sock,&read_fds))
-	{
-		clnt_sock = accept(serv_sock, (struct sockaddr*)&clnt_adr, &clnt_adr_sz);
-		
-		if(clnt_sock !=-1)
-		{
-			//add for the new client(player)
-			players[num_chat++].client_s = clnt_sock;
-
-			//send welcome messge to connected clients
-			send(clnt_sock,start,strlen(start),0);
-			
-			printf("%dth player connected.\n",num_chat);
-		}
-	}
 	memset(message,0,sizeof(message));
+	if(num_chat==3)
+		printf("start bingo game!\n");
 	
-	//send the message from one of clients to all of clients
-	for(i=0;i<num_chat;i++)
+
+	//start setting the game***********************************
+	//send the messages!!
+	for(j=0;j<num_chat;j++)
 	{
-		if(FD_ISSET(players[i].client_s,&read_fds))
-		{
-			if((n = recv(players[i].client_s,message,BUF_SIZE,0))>0)
-			{
-					message[n] = '\0';
-				
-				//receive message from clients & exit message handling
-				//q ->out , Q-> out
-				if(exitCheck(message,escapechar1,2)==1||exitCheck(message,escapechar2,2)==1)	
-				{
-					printf("%s Exit\n",players[i].name);
-					
-					if(i!=num_chat-1)
-					//not the last user
-					{	
-					players[i].client_s = players[num_chat-1].client_s;
-					strcpy(players[i].name,players[num_chat-1].name);
-					}
-					num_chat--;
-					continue;
-				}
-			}
-			
-			//enroll the player's name
-			if(strstr(message,"name:")!=NULL)
-			{
-			char* token = strtok(message, ":");
-			token = strtok(NULL," ");
-			strcpy(players[i].name,token);
-			printf("%dth player's name: %s,socket number: %d\n",i+1,players[i].name,players[i].client_s);
-			snprintf(message,BUF_SIZE,"player %s!",players[i].name);
-			}
-			
-			//send the messages!!
-			for(j=0;j<num_chat;j++)
-			{
-				send(players[j].client_s,message,n,0);
-				
-			}
-				
-		}
+		
+		send(players[j].client_s,startgame,strlen(startgame),0);
 	}
 	
-   }
+while(1){;}				
+	  
 }
 
 void error_handling(char* message)
