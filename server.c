@@ -18,7 +18,7 @@
 void error_handling(char* );
 int exitCheck(char*,char*,int);
 struct Player{
-	char name[100]; //name used for chatting roome
+
 	int client_s; //socket number of the client
 };
 
@@ -28,19 +28,16 @@ char *escapechar2 = "Q\n";
 int main(int argc, char* argv[])
 {
 	int serv_sock,clnt_sock;
-	char *start = "Connected successfully! Please wait for another users.\n";
 	char *startgame = "game start!\n";
 	char message[BUF_SIZE];
 	int str_len,i,j;
-	fd_set read_fds,cpyReads;
+	fd_set read_fds;
 	int num_chat = 0;
-	struct timeval timeout;
 	struct sockaddr_in serv_adr,clnt_adr;
 	//socket address of server and client 
 	int nfds;
  	int n;
-	int Changedfd;
-
+	
 	socklen_t clnt_adr_sz;
 
 	if(argc!=2)
@@ -76,8 +73,10 @@ int main(int argc, char* argv[])
 	FD_ZERO(&read_fds);
 
 	
-	do
+	while(1)
 	{
+		if(num_chat>=3)
+			break;
       	        //stage3.5 select       
 		if((num_chat-1)>=0)
 			nfds = players[num_chat-1].client_s+1;
@@ -99,14 +98,12 @@ int main(int argc, char* argv[])
                		 {	
                         //add for the new client(player)
                         players[num_chat++].client_s = clnt_sock;
-
-                        //send welcome messge to connected clients
-                        send(clnt_sock,start,strlen(start),0);
-
                         printf("%dth player connected.\n",num_chat);
                 	}
         	}
-	}while(num_chat<3);	
+
+
+	}
 
 
 	memset(message,0,sizeof(message));
@@ -121,6 +118,8 @@ int main(int argc, char* argv[])
 		
 		send(players[j].client_s,startgame,strlen(startgame),0);
 	}
+//	send(players[num_chat].client_s,startgame,strlen(startgame),0);
+//	send(players[num_chat-1].client_s,startgame,strlen(startgame),0);
 	
 while(1){;}				
 	  
