@@ -328,8 +328,7 @@ void play(int y, int x)
                 input_number(startX, startY, letterX, letterY);
                 filled_block++;
         }
-	//DONE MESSAGE
-//	erase_notice(letterX,letterY);
+	
 	if((n = send(sock,donemessage,strlen(donemessage),0))>0)
 	{
 	erase_notice(letterX,letterY);
@@ -371,7 +370,8 @@ void input_number(int startX, int startY, int letterX, int letterY)
                         mvprintw(letterY + 5, letterX, "You can't input the number !");
                         refresh();
                         sleep(2);
-                        mvprintw(letterY + 5, letterX, "                            "); // erase the input field
+                        mvprintw(letterY + 5, letterX, "                            "); 
+			// erase the input field
                         refresh();
                 }
                 else
@@ -391,7 +391,8 @@ void input_number(int startX, int startY, int letterX, int letterY)
 			//send to server=>"row col num"
 		*/
 			board_number[row][col] = int_num;
-                        mvprintw(letterY + 5, letterX, "                "); // erase the input field
+                        mvprintw(letterY + 5, letterX, "                "); 
+			// erase the input field
                         display_board(startX, startY, row, col, num);
                         break;
                 }
@@ -481,7 +482,6 @@ void erase_notice(int letterX, int letterY)
 }
 void ready_to_fight(int letterX, int letterY)
 {
-     //   erase_notice(letterX, letterY);
         standout();
 	mvprintw(letterY + 5, letterX + 4, "We're waiting other players...");
         standend();

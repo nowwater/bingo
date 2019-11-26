@@ -154,30 +154,20 @@ int main(int argc, char* argv[])
 					}
 				}
 			}
-			if(cnt_done>=3)break;
+		//	if(cnt_done>=3)break;
 
 		   }
-		  //all users ended filling their board
 
-/*		  if(cnt_done==3)
-		  {
-			printf("start calling numbers!\n");
-
-			//send the message to all users
-			for(j=0;j<num_chat;j++)
-			{
-			  send(players[j].client_s, startcalling,strlen(startcalling),0);
-			}
-		 //  memset(message,0,sizeof(message));
-		  }*/
-		if(cnt_done==3)
-		printf("all done\n");	
-			while(1){;}
-		  }//num_chat reaches 
+		    
+ 		  //all users ended filling their own boards.
+		 if(cnt_done==3)
+		   printf("all done\n");
+			
+		}//if(num_chat==3)
+		while(1){;} 
 	}//while(1)
 
-		/*************game start******************/
-		//what server has to do : recv message from client
+		
 
 }//main
 
