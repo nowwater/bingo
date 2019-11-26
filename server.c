@@ -123,7 +123,7 @@ int main(int argc, char* argv[])
 				
 			}//fd_isset
 		   }//while(1)
-		
+		   
 		  if(num_chat==3)
 	          {
 		    printf("start bingo game!\n");
@@ -132,15 +132,42 @@ int main(int argc, char* argv[])
        			 {	
                		 send(players[j].client_s,startgame,strlen(startgame),0);
        			 }
+		    memset(message,0,sizeof(message));
+
+		    while(1)
+		    {
+			for(j=0;j<num_chat;j++)
+			//receive messages from client
+			{
+				if(FD_ISSET(players[j].client_s,&read_fds))
+				{
+					if((n = recv(players[j].client_s,message,BUF_SIZE,0))>0)
+					{
+					  message[n] = '\0';
+					  printf("message received from %dth player:%s\n",j,message);
+					}
+				}
+			}
+
+
+
+		   }
+
+
+
+
+
 		  }//num_chat reaches 3
+
+		
+
 		
 	}//while(1)
 
 		/*************game start******************/
-		while(1){;}
 		//what server has to do : recv message from client
 
-	}//main
+}//main
 
 //manage the ith client's bingo board based on 'i'th client's message.
 void board_managing(char* message, int i)
