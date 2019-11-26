@@ -63,6 +63,7 @@ int check_double_number[51];
 //count the number of filled block
 int filled_block = 0;
 
+fd_set read_fds;
 
 //wait screen
 void waitscreen();
@@ -84,7 +85,7 @@ void input_number(int startX, int startY, int letterX, int letterY);
 void ready_to_fight(int letterX, int letterY);
 int str_int(char* num);
 int check(int int_num);
-
+void tempscreen();
 
 //error handling - exit
 void error_handling(char* message);
@@ -97,7 +98,6 @@ int main(int argc, char *argv[])
 	char message[BUF_SIZE];
 	int str_len;
 	struct sockaddr_in serv_adr;
-	fd_set read_fds;
 	int nfds;
 	int size;
 	int cnt=0;
@@ -168,6 +168,15 @@ int main(int argc, char *argv[])
 
 	return 0;
 }
+void tempscreen()
+{
+        stdscr = initscr();
+        noecho();
+        clear();
+        mvprintw(10,33,"success");
+        refresh();
+
+}
 void waitscreen()
 {
 	stdscr = initscr();
@@ -235,7 +244,7 @@ void title()
 				
                                 if (cnt == 1)
                                         cnt = 3;
-                                else
+                               else
                                         cnt--;
 				
                         }
@@ -303,6 +312,10 @@ void play(int y, int x)
         int startY = 1, startX = 3;
         int letterY = startY + 5;
         int letterX = startX + 38;
+	char *donemessage = "DONE!\n";
+	int n;
+	char recvmessage[BUF_SIZE];
+
         clear();
         refresh();
 
@@ -315,13 +328,16 @@ void play(int y, int x)
                 input_number(startX, startY, letterX, letterY);
                 filled_block++;
         }
-        ready_to_fight(letterX, letterY);
-
-        
-        sleep(2);
-
-        erase_notice(letterX, letterY);
-while(1){;}
+	//DONE MESSAGE
+//	erase_notice(letterX,letterY);
+	if((n = send(sock,donemessage,strlen(donemessage),0))>0)
+	{
+	erase_notice(letterX,letterY);
+	while(1)
+	 {	
+        	ready_to_fight(letterX,letterY);
+	 }
+	}
 /*
         while (bingo_check() < 3)
         {
@@ -368,12 +384,12 @@ void input_number(int startX, int startY, int letterX, int letterY)
 			
 				}
 
-			sprintf(sendmessage, "%d %d %d", row,col,int_num);
+		/*	sprintf(sendmessage, "%d %d %d", row,col,int_num);
 			sendmessage[strlen(sendmessage)] = '\0';
 			if((n=send(sock,sendmessage,strlen(sendmessage),0))>0)
 			{mvprintw(letterY+7,letterX,"%d %d %d",row,col,int_num);			refresh();sleep(3);}
 			//send to server=>"row col num"
-
+		*/
 			board_number[row][col] = int_num;
                         mvprintw(letterY + 5, letterX, "                "); // erase the input field
                         display_board(startX, startY, row, col, num);
@@ -465,11 +481,11 @@ void erase_notice(int letterX, int letterY)
 }
 void ready_to_fight(int letterX, int letterY)
 {
-        erase_notice(letterX, letterY);
+     //   erase_notice(letterX, letterY);
         standout();
-        mvprintw(letterY + 5, letterX + 4, "We're waiting other players.");
+	mvprintw(letterY + 5, letterX + 4, "We're waiting other players...");
         standend();
-        refresh();
+	refresh();
         noecho();
 }
 void explain()

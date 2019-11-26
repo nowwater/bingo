@@ -46,6 +46,7 @@ int main(int argc, char* argv[])
 {
 	int serv_sock,clnt_sock;
 	char *startgame = "game start!\n";
+	char *startcalling = "call the number!\n";
 	char message[BUF_SIZE];
 	int str_len,i,j;
 	fd_set read_fds,cpyReads;
@@ -56,6 +57,7 @@ int main(int argc, char* argv[])
  	int n;
 	struct timeval timeout;
 	int fdNum;
+	int cnt_done = 0;
 
 	socklen_t clnt_adr_sz;
 
@@ -145,23 +147,33 @@ int main(int argc, char* argv[])
 					{
 					  message[n] = '\0';
 					  printf("message received from %dth player:%s\n",j,message);
+					  if(strcmp(message,"DONE!\n")==0)
+						cnt_done++;
+					   if(cnt_done>=3)
+						break;	
 					}
 				}
 			}
-
-
+			if(cnt_done>=3)break;
 
 		   }
+		  //all users ended filling their board
 
+/*		  if(cnt_done==3)
+		  {
+			printf("start calling numbers!\n");
 
-
-
-
-		  }//num_chat reaches 3
-
-		
-
-		
+			//send the message to all users
+			for(j=0;j<num_chat;j++)
+			{
+			  send(players[j].client_s, startcalling,strlen(startcalling),0);
+			}
+		 //  memset(message,0,sizeof(message));
+		  }*/
+		if(cnt_done==3)
+		printf("all done\n");	
+			while(1){;}
+		  }//num_chat reaches 
 	}//while(1)
 
 		/*************game start******************/
@@ -201,10 +213,9 @@ puts("managing start");
 
         playerboards[i].client_s = players[i].client_s;
 	playerboards[i].board[input_row][input_col] = input_num;
-/*
-	printf("%dth users message : %s(row col num)\n",i,message);
-	printf("what I got: %d %d %d (%dth socket, %dth user)\n",input_row,input_col,input_num,playerboards[i].client_s,i);
-*/
+
+	printf("%dth user's managing board updated: playerboards[%d].board[%d][%d] = %d\n, socket num: %d\n",i,i,input_row,input_col,playerboards[i].board[input_row][input_col],playerboards[i].client_s);
+
 }
 
 
