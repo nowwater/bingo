@@ -60,6 +60,9 @@ int board_number[5][5];
 //check if it has already written.
 int check_double_number[51];
 
+//count the number of filled block
+int filled_block = 0;
+
 
 //wait screen
 void waitscreen();
@@ -262,7 +265,7 @@ void title()
                 explain();
                 break;
         case 3:
-                play(y, x); //end_game();
+                end_game();
         }
         title();
 
@@ -296,7 +299,7 @@ void select_menu(int y, int x,int menu)
 
 void play(int y, int x)
 {
-        int cnt = 0, ch;
+        int ch;
         int startY = 1, startX = 3;
         int letterY = startY + 5;
         int letterX = startX + 38;
@@ -306,11 +309,11 @@ void play(int y, int x)
         display_mainboard(startX, startY);
         refresh();
 
-        while (cnt < 25)
+        while (filled_block < 25)
         {
-                display_message(startX, startY, letterX, letterY);
+               display_message(startX, startY, letterX, letterY);
                 input_number(startX, startY, letterX, letterY);
-                cnt++;
+                filled_block++;
         }
         ready_to_fight(letterX, letterY);
 
@@ -335,7 +338,10 @@ void input_number(int startX, int startY, int letterX, int letterY)
 {
         int row, col, int_num;
         char num[50];
-        curs_set(1);
+        char sendmessage[BUF_SIZE] = "";
+	int n;
+
+	 curs_set(1);
         echo();
 
         while (1)
@@ -356,8 +362,19 @@ void input_number(int startX, int startY, int letterX, int letterY)
                 {
                         check_double_number[int_num] = int_num;
                         if (board_number[row][col] > 0)
-                                check_double_number[board_number[row][col]] = 0;
-                        board_number[row][col] = int_num;
+				{
+                                	check_double_number[board_number[row][col]] = 0;
+                        		filled_block--;
+			
+				}
+
+			sprintf(sendmessage, "%d %d %d", row,col,int_num);
+			sendmessage[strlen(sendmessage)] = '\0';
+			if((n=send(sock,sendmessage,strlen(sendmessage),0))>0)
+			{mvprintw(letterY+7,letterX,"%d %d %d",row,col,int_num);			refresh();sleep(3);}
+			//send to server=>"row col num"
+
+			board_number[row][col] = int_num;
                         mvprintw(letterY + 5, letterX, "                "); // erase the input field
                         display_board(startX, startY, row, col, num);
                         break;
@@ -455,8 +472,6 @@ void ready_to_fight(int letterX, int letterY)
         refresh();
         noecho();
 }
-
-//explan,quit
 void explain()
 {
         int pointy = 6;
@@ -486,7 +501,11 @@ void explain()
                 }
         }
 }
-
+void end_game()
+{
+        endwin();
+        exit(1);
+}
 void error_handling(char* message)
 {
 	fputs(message, stderr);

@@ -15,29 +15,48 @@
 
 #define BUF_SIZE 1024
 
-void error_handling(char* );
-int exitCheck(char*,char*,int);
 struct Player{
 
-	int client_s; //socket number of the client
+	int client_s; 
+	//socket number of the client
 };
 
-struct Player players[3]; //maximum players: 3 people
+//manage players' bingo board
+typedef struct {
+	int client_s;
+	int board[5][5];
+}Player_board;
+Player_board playerboards[3];
+
+//maximum players: 3people
+struct Player players[3];
+
+
 char *escapechar1 = "q\n";
 char *escapechar2 = "Q\n";
+
+void error_handling(char* );
+int exitCheck(char*,char*,int);
+int str_int(char* num);
+
+//managing client's bingo board
+void board_managing(char*, int);
+
 int main(int argc, char* argv[])
 {
 	int serv_sock,clnt_sock;
 	char *startgame = "game start!\n";
 	char message[BUF_SIZE];
 	int str_len,i,j;
-	fd_set read_fds;
+	fd_set read_fds,cpyReads;
 	int num_chat = 0;
 	struct sockaddr_in serv_adr,clnt_adr;
 	//socket address of server and client 
 	int nfds;
  	int n;
-	
+	struct timeval timeout;
+	int fdNum;
+
 	socklen_t clnt_adr_sz;
 
 	if(argc!=2)
@@ -65,65 +84,120 @@ int main(int argc, char* argv[])
 	if(listen(serv_sock,5)==-1)
 		error_handling("listen() error");
 	
-	clnt_adr_sz = sizeof(clnt_adr);
 	
 	nfds = serv_sock+1;
 	//maximum socket number +1
 
 	FD_ZERO(&read_fds);
-
+	FD_SET(serv_sock,&read_fds);
 	
 	while(1)
 	{
-		if(num_chat>=3)
-			break;
-      	        //stage3.5 select       
-		if((num_chat-1)>=0)
-			nfds = players[num_chat-1].client_s+1;
-
-		FD_SET(serv_sock,&read_fds);
-
-		for(i=0;i<num_chat;i++)
-			FD_SET(players[i].client_s,&read_fds);
-		if(select(nfds,&read_fds,(fd_set*)0,(fd_set*)0,(struct timeval*)0)<0)
-			error_handling("select() error");
-	
-       		 //stage4.accept(for multiple clients)
-        	if(FD_ISSET(serv_sock,&read_fds))
-       		{
-                clnt_adr_sz = sizeof(clnt_adr);
-                clnt_sock = accept(serv_sock, (struct sockaddr*)&clnt_adr, &clnt_adr_sz);
-
-                if(clnt_sock !=-1)
-               		 {	
-                        //add for the new client(player)
-                        players[num_chat++].client_s = clnt_sock;
-                        printf("%dth player connected.\n",num_chat);
-                	}
-        	}
-
-
-	}
-
-
-	memset(message,0,sizeof(message));
-	if(num_chat==3)
-		printf("start bingo game!\n");
-	
-
-	//start setting the game***********************************
-	//send the messages!!
-	for(j=0;j<num_chat;j++)
-	{
 		
-		send(players[j].client_s,startgame,strlen(startgame),0);
-	}
-//	send(players[num_chat].client_s,startgame,strlen(startgame),0);
-//	send(players[num_chat-1].client_s,startgame,strlen(startgame),0);
-	
-while(1){;}				
-	  
+		cpyReads = read_fds;
+		timeout.tv_sec = 5;
+		timeout.tv_usec - 5000;
+
+      	        //stage3.5 select   
+	    	if((fdNum = select(nfds,&cpyReads,0,0,NULL))==-1)
+			break;
+		if(fdNum==0)
+			continue;
+		
+		while(1)
+		{ 
+			if(FD_ISSET(serv_sock,&cpyReads))
+			{
+				
+				
+			           //connection request!
+				   clnt_adr_sz = sizeof(clnt_adr);
+			           clnt_sock = accept(serv_sock,(struct sockaddr*)&clnt_adr,&clnt_adr_sz);
+			  	   FD_SET(clnt_sock,&read_fds);
+				   if(nfds<clnt_sock)
+					nfds= clnt_sock;
+				    players[num_chat++].client_s = clnt_sock;
+				    printf("%dth player connected.\n",num_chat);
+				    if(num_chat>=3) 
+					break;
+				
+			}//fd_isset
+		   }//while(1)
+		
+		  if(num_chat==3)
+	          {
+		    printf("start bingo game!\n");
+        	 
+			for(j=0;j<num_chat;j++)
+       			 {	
+               		 send(players[j].client_s,startgame,strlen(startgame),0);
+       			 }
+		  }//num_chat reaches 3
+		
+	}//while(1)
+
+		/*************game start******************/
+		while(1){;}
+		//what server has to do : recv message from client
+
+	}//main
+
+//manage the ith client's bingo board based on 'i'th client's message.
+void board_managing(char* message, int i)
+{
+puts("managing start");
+	char* ptr;
+
+	char* row;
+        char* col;
+        char* string_num;
+
+        int input_row,input_col,input_num;
+
+	ptr = strtok(message," ");
+
+        //row
+        strcpy(row,ptr);
+        
+	//col
+        ptr = strtok(NULL," ");
+        strcpy(col,ptr);
+                        
+	//num
+        ptr = strtok(NULL," ");
+      	strcpy(string_num,ptr);
+
+       	//string->int
+        input_row = str_int(row);
+        input_col = str_int(col);
+       	input_num = str_int(string_num);
+
+        playerboards[i].client_s = players[i].client_s;
+	playerboards[i].board[input_row][input_col] = input_num;
+/*
+	printf("%dth users message : %s(row col num)\n",i,message);
+	printf("what I got: %d %d %d (%dth socket, %dth user)\n",input_row,input_col,input_num,playerboards[i].client_s,i);
+*/
 }
+
+
+
+int str_int(char* num)
+{
+        int k = strlen(num);
+        int digit = 1;
+        int number = 0;
+
+        while (0 < k)
+        {
+                k--;
+                number += ((num[k] - '0') * digit);
+                digit *= 10;
+        }
+
+        return number;
+}
+
 
 void error_handling(char* message)
 {
