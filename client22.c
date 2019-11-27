@@ -67,6 +67,9 @@ fd_set read_fds;
 
 //wait screen
 void waitscreen();
+//debugging screen
+void tempscreen();
+void tempscreen2();
 
 //function for title screen
 void title();
@@ -85,8 +88,12 @@ void input_number(int startX, int startY, int letterX, int letterY);
 void ready_to_fight(int letterX, int letterY);
 int str_int(char* num);
 int check(int int_num);
-void tempscreen();
-void ready_to_fight2(int letterX, int letterY);
+void display_message2(int startX, int startY, int letterX, int letterY);
+void input_number2(int startX, int startY, int letterX, int letterY);
+void ready_to_bingo();
+int bingo_check();
+void find_and_erase_number(int,int,int,int,int);
+
 //error handling - exit
 void error_handling(char* message);
 
@@ -173,10 +180,24 @@ void tempscreen()
         stdscr = initscr();
         noecho();
         clear();
-        mvprintw(10,33,"lets call the number");
+        mvprintw(10,33,"LOSE");
         refresh();
+	sleep(4);
+	endwin();//exit(1);
+
 
 }
+void tempscreen2()
+{
+        stdscr = initscr();
+        noecho();
+        clear();
+        mvprintw(10,33,"WIN");
+        refresh();
+	sleep(4);
+	endwin();//exit(1);
+}
+
 void waitscreen()
 {
 	stdscr = initscr();
@@ -315,6 +336,9 @@ void play(int y, int x)
 	char *donemessage = "DONE!\n";
 	int n;
 	char recvmessage[BUF_SIZE];
+	char* ptr;
+	char* str_num;
+	int int_num;
 
         clear();
         refresh();
@@ -335,53 +359,128 @@ void play(int y, int x)
 	   erase_notice(letterX,letterY);
 	   ready_to_fight(letterX,letterY);
 	   //waiting for another user
-	   
-	   //fot the last user
 
 	   while(1)
 	   {
-	     //default: no messages->waiting for my turn
-	     ready_to_fight2(letterX,letterY);
-
-	      
-               
-		//ANY MESSAGES FROM SERVER?
-		if((n = recv(sock,recvmessage,BUF_SIZE,0))>0)
-		{
+	    
+	      if((n = recv(sock,recvmessage,BUF_SIZE,0))>0)
+              { //ALL DONE?
                 recvmessage[n] = '\0';
-                if(strncmp(recvmessage,"call the number!\n",strlen(recvmessage))==0)  
-                 {
-		 //GAME START
-                 ready_to_fight2(letterX,letterY);          
-	         }
-		if(strncmp(recvmessage,"TURN\n",strlen(recvmessage))==0)
-		 {
-		 //MY TURN?
-		  tempscreen();
-                 }	
+                if(strncmp(recvmessage,"call the number!\n",strlen(recvmessage))==0)                                       
+			  {
+                         //  mvprintw(letterY + 5, letterX + 4, "					           ");
 
-	        }
-	    }
-	   }//while(1)
-	 }//all boards set complete
+			     while(1)
+			     { 
+				 while(bingo_check()<3)
+				{ 
+				  display_message2(startX,startY,letterX,letterY);
+				  ready_to_fight(letterX,letterY);
+	      			   //always listening to sever->am I loser?
+				   if((n = recv(sock,recvmessage,BUF_SIZE,0))>0)
+				   {
+				    erase_notice(letterX,letterY);
+					
+				    //(1)GAME ENDING->LOSE SCREEN
+				    if(strncmp(recvmessage,"LOSE\n",strlen(recvmessage))==0)
+					tempscreen();
+				     
+				    //(2)MY TURN : DISPLAY&INPUT ->SEND IT TO SERVER
+				    if(strncmp(recvmessage,"TURN\n",strlen(recvmessage))==0)
+					input_number2(startX,startY,letterX,letterY);
+				    //(3)OTHER'S TURN: ERASE MY THING
+				    else
+				    {
+					//1.find the number from message
+					ptr = strtok(recvmessage,"-");
+					ptr = strtok(NULL,"-");
+					strcpy(str_num,ptr);
+					int_num = str_int(str_num);
 
-/*
-        while (bingo_check() < 3)
+					//2.find if it exists in my board
+					//2-1. exists -> erase
+					//2-2. not exist -> continue;
+					find_and_erase_number(int_num,startX,startY,letterX,letterY);
+				    } 
+				   }
+				 }
+				//shout out BINGO!
+				while(1)
+				{
+				if((n = recv(sock,recvmessage,BUF_SIZE,0))>0)
+				{
+					if(strncmp(recvmessage,"LOSE\n",strlen(recvmessage))==0)
+						tempscreen();
+				}
+				ready_to_bingo();
+				//LISETNGING-GAN-BAL CHAI..
+				//WINNER
+				if((n = recv(sock,recvmessage,BUF_SIZE,0))>0)
+				{
+					     if(strncmp(recvmessage,"WIN!\n",strlen(recvmessage))==0)
+                                                tempscreen2();
+
+				}}
+	      	 	     }
+			   }
+
+	      }
+        	ready_to_fight(letterX,letterY);
+	 	
+	   }
+	 }
+
+
+}
+
+void ready_to_bingo()
+{
+
+	int ch;
+        int letterX = 25;
+        int letterY = 12;
+        char answer[10];
+        char *bingomessage = "BINGO\n";
+
+        while (1)
         {
-                display_message2(startX, startY, letterX, letterY);
-                input_number2(startX, startY, letterX, letterY);
-        }
-        ready_to_bingo(letterX, letterY);
+                mvscanw(letterY + 1, letterX, "%s", answer);
+                refresh();
 
-        clear();
-        endwin();
-        return;*/
+                if (!strcmp(answer, "BINGO"))
+                        break;
+        }
+	send(sock,bingomessage,strlen(bingomessage),0);
+}
+void find_and_erase_number(int int_num,int startX,int startY,int letterX,int letterY)
+{
+	int i,j,n;
+	 
+        for (i = 0; i < 5; i++)
+        {
+                for (j = 0; j < 5; j++)
+                {
+                        if (board_number[i][j] == int_num)
+                        {
+                          
+                                board_number[i][j] = -1;                
+                                display_board(startX, startY, i, j, "X");
+                                return;
+                        }
+                }
+        }
+
+        mvprintw(letterY + 5, letterX, "You don't have this number !");
+        refresh();
+        sleep(2);
+        mvprintw(letterY + 5, letterX, "                            "); // erase the input field
+        
+
 }
 void input_number(int startX, int startY, int letterX, int letterY)
 {
         int row, col, int_num;
         char num[50];
-        char sendmessage[BUF_SIZE] = "";
 	int n;
 
 	 curs_set(1);
@@ -392,7 +491,7 @@ void input_number(int startX, int startY, int letterX, int letterY)
                 mvscanw(letterY + 5, letterX, "%d %d %s", &row, &col, num);
                 row -= 1;
                 col -= 1;
-                int_num = str_int(num);
+		int_num = str_int(num);
                 if (check(int_num) || (int_num > 50) || (int_num < 1))
                 {
                         mvprintw(letterY + 5, letterX, "You can't input the number !");
@@ -412,12 +511,6 @@ void input_number(int startX, int startY, int letterX, int letterY)
 			
 				}
 
-		/*	sprintf(sendmessage, "%d %d %d", row,col,int_num);
-			sendmessage[strlen(sendmessage)] = '\0';
-			if((n=send(sock,sendmessage,strlen(sendmessage),0))>0)
-			{mvprintw(letterY+7,letterX,"%d %d %d",row,col,int_num);			refresh();sleep(3);}
-			//send to server=>"row col num"
-		*/
 			board_number[row][col] = int_num;
                         mvprintw(letterY + 5, letterX, "                "); 
 			// erase the input field
@@ -456,6 +549,105 @@ void display_message(int startX, int startY, int letterX, int letterY)
         mvaddstr(letterY + 3, letterX, "Input this format -> row column number");
         refresh();
 }
+void display_message2(int startX, int startY, int letterX, int letterY)
+{
+        mvprintw(startY, startX + 8, "<<YOUR BINGO BOARD>>");
+        mvaddstr(letterY - 1, letterX, "Erase a number you want in your turn!");
+        mvaddstr(letterY, letterX, "All numbers must be between 1 and 50.");
+        mvaddstr(letterY + 1, letterX, "You can input a number only once.");
+        mvaddstr(letterY + 3, letterX, "Input this format -> number");
+//        mvprintw(LINES - 2, 60, "Go back : q");
+        refresh();
+}
+void input_number2(int startX, int startY, int letterX, int letterY)
+{
+        int int_num;
+        char num[50];
+	char message[BUF_SIZE];
+	char* this_turn_number = "erase this number-";
+        int i, j,n;
+        curs_set(1);
+        echo();
+
+	while(1)
+        {
+	mvscanw(letterY + 5, letterX, "%s", num);
+        int_num = str_int(num);
+
+        for (i = 0; i < 5; i++)
+        {
+                for (j = 0; j < 5; j++)
+                {
+                        if (board_number[i][j] == int_num)
+                        {
+                                mvprintw(letterY + 5, letterX, "        "); // erase the input field
+                                board_number[i][j] = -1;
+				sprintf(message,"%s%d",this_turn_number,int_num);
+				message[strlen(message)] = '\0';
+				//sending it to server			
+				if((n = send(sock,message,strlen(message),0))>0)
+                                	display_board(startX, startY, i, j, "X");
+                                break;
+                        }
+                }
+        }
+
+        mvprintw(letterY + 5, letterX, "You don't have this number !");
+        refresh();
+        sleep(2);
+        mvprintw(letterY + 5, letterX, "                            "); // erase the input field
+	}
+
+}
+int bingo_check()
+{
+        int garo = 0, sero = 0, diagL = 0, diagR = 0;
+        int i, j, bingo = 0;
+
+        for (i = 0; i < MAX; i++)
+        {
+                garo = 0;
+
+                for (j = 0; j < MAX; j++)
+                {
+                        if (board_number[i][j] == -1) garo++;
+                        if (i == j)
+                        {
+                                if (board_number[i][j] == -1)
+                                        diagL++;
+                        }
+
+                        if ((i + j) == 4)
+                        {
+                                if (board_number[i][j] == -1)
+                                        diagR++;
+                        }
+                }
+
+                if (garo == MAX)
+                {
+                        bingo++;
+                }
+        }
+
+        for (j = 0; j < MAX; j++)
+        {
+                sero = 0;
+
+                for (i = 0; i < MAX; i++)
+                        if (board_number[i][j] == -1) sero++;
+
+                if (sero == 5)
+                {
+                        bingo++;
+                }
+        }
+
+        bingo += (diagL / 5) + (diagR / 5);
+
+        return bingo;
+}
+
 int str_int(char* num)
 {
         int k = strlen(num);
@@ -516,16 +708,6 @@ void ready_to_fight(int letterX, int letterY)
 	refresh();
         noecho();
 }
-void ready_to_fight2(int letterX, int letterY)
-{
-	mvprintw(letterY+5,letterX+4,"								");
-        standout();
-        mvprintw(letterY + 5, letterX + 4, "Waiting for my turn....");
-        standend();
-        refresh();
-        noecho();
-}
-
 void explain()
 {
         int pointy = 6;
