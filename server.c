@@ -15,143 +15,225 @@
 
 #define BUF_SIZE 1024
 
-void error_handling(char* );
-int exitCheck(char*,char*,int);
-struct Player{
-	char name[100]; //name used for chatting roome
-	int client_s; //socket number of the client
-};
+char* escapechar1 = "q\n";
+char* escapechar2 = "Q\n";
 
-struct Player players[3]; //maximum players: 3 people
-char *escapechar1 = "q\n";
-char *escapechar2 = "Q\n";
+void error_handling(char*);
+int exitCheck(char*, char*, int);
+int str_int(char* num);
+
 int main(int argc, char* argv[])
 {
-	int serv_sock,clnt_sock;
-	char *start = "Connected successfully! Please wait for another users.\n";
-	char *startgame = "game start!\n";
-	char message[BUF_SIZE];
-	int str_len,i,j;
-	fd_set read_fds,cpyReads;
-	int num_chat = 0;
-	struct timeval timeout;
-	struct sockaddr_in serv_adr,clnt_adr;
 	//socket address of server and client 
+	int serv_sock;
+	int clnt_sock;
+	int str_len, i, j;
+	int num = 0;
+	int client_s[5];
+	struct sockaddr_in serv_adr, clnt_adr;
 	int nfds;
- 	int n;
-	int Changedfd;
+	int n;
+	int fdNum;
+	int cnt_done = 0;
+	int turn = 0;
+	struct timeval timeout;
 
+	char* startgame = "game start!\n";
+	char* startcalling = "call the number!\n";
+	char* turnmessage = "TURN\n";
+	char message[BUF_SIZE];
 	socklen_t clnt_adr_sz;
+	fd_set read_fds, cpyReads;
 
-	if(argc!=2)
+	if (argc != 2)
 	{
-		printf("Usage : %s <port>\n",argv[0]);
+		printf("Usage : %s <port>\n", argv[0]);
 		exit(1);
 	}
-	
-	puts("--------------------initialize the server--------------------------");
+
+	puts("--------------------------Initialize the server--------------------------");
 	//stage1. socket	
 	serv_sock = socket(PF_INET, SOCK_STREAM, 0);
-	if(serv_sock==-1)
+	if (serv_sock == -1)
 		error_handling("socket() error");
-	
-	memset(&serv_adr,0,sizeof(serv_adr));
+
+	memset(&serv_adr, 0, sizeof(serv_adr));
 	serv_adr.sin_family = AF_INET;
 	serv_adr.sin_addr.s_addr = htonl(INADDR_ANY);
 	serv_adr.sin_port = htons(atoi(argv[1]));
 
 	//stage 2. bind
-	if(bind(serv_sock, (struct sockaddr*)&serv_adr, sizeof(serv_adr))==-1)
+	if (bind(serv_sock, (struct sockaddr*) & serv_adr, sizeof(serv_adr)) == -1)
 		error_handling("bind() error");
-	
+
 	//stage3. listen
-	if(listen(serv_sock,5)==-1)
+	if (listen(serv_sock, 5) == -1)
 		error_handling("listen() error");
-	
-	clnt_adr_sz = sizeof(clnt_adr);
-	
-	nfds = serv_sock+1;
+
+	nfds = serv_sock + 1;
 	//maximum socket number +1
 
 	FD_ZERO(&read_fds);
+	FD_SET(serv_sock, &read_fds);
 
-	
-	do
+	while (1)
 	{
-      	        //stage3.5 select       
-		if((num_chat-1)>=0)
-			nfds = players[num_chat-1].client_s+1;
+		cpyReads = read_fds;
+		timeout.tv_sec = 5;
+		timeout.tv_usec = 5000;
 
-		FD_SET(serv_sock,&read_fds);
+		//stage3.5 select
+		if ((fdNum = select(nfds, &cpyReads, 0, 0, NULL)) == -1)
+			break;
+		if (fdNum == 0)
+			continue;
 
-		for(i=0;i<num_chat;i++)
-			FD_SET(players[i].client_s,&read_fds);
-		if(select(nfds,&read_fds,(fd_set*)0,(fd_set*)0,(struct timeval*)0)<0)
-			error_handling("select() error");
-	
-       		 //stage4.accept(for multiple clients)
-        	if(FD_ISSET(serv_sock,&read_fds))
-       		{
-                clnt_adr_sz = sizeof(clnt_adr);
-                clnt_sock = accept(serv_sock, (struct sockaddr*)&clnt_adr, &clnt_adr_sz);
+		while (num < 3)
+		{
+			if (FD_ISSET(serv_sock, &cpyReads))
+			{
+				//connection request!
+				clnt_adr_sz = sizeof(clnt_adr);
+				clnt_sock = accept(serv_sock, (struct sockaddr*) & clnt_adr, &clnt_adr_sz);
+				FD_SET(clnt_sock, &read_fds);
 
-                if(clnt_sock !=-1)
-               		 {	
-                        //add for the new client(player)
-                        players[num_chat++].client_s = clnt_sock;
+				//new client socket
+				if (nfds < clnt_sock)
+					nfds = clnt_sock;
 
-                        //send welcome messge to connected clients
-                        send(clnt_sock,start,strlen(start),0);
+				client_s[num++] = clnt_sock;
+				//client descriptor을 배열에 저장
 
-                        printf("%dth player connected.\n",num_chat);
-                	}
-        	}
-	}while(num_chat<3);	
+				printf("%dth player connected.\n", num);
 
+			}
+		}
 
-	memset(message,0,sizeof(message));
-	if(num_chat==3)
 		printf("start bingo game!\n");
-	
 
-	//start setting the game***********************************
-	//send the messages!!
-	for(j=0;j<num_chat;j++)
+		for (j = 0; j < num; j++)
+		{
+			send(client_s[j], startgame, strlen(startgame), 0);
+			//write로 바꾸기&thread 사용하기
+		}
+		memset(message, 0, sizeof(message));
+
+		while (1)
+		{
+			for (j = 0; j < num; j++)//receive messages from client
+			{
+				if (FD_ISSET(client_s[j], &read_fds))
+				{
+					if ((n = recv(client_s[j], message, BUF_SIZE, 0)) > 0)
+					{
+						message[n] = '\0';
+						printf("message received from %dth player:%s\n", j + 1, message);
+						if (strcmp(message, "DONE!\n") == 0)
+							cnt_done++;
+						if (cnt_done >= 3)
+							break;
+					}
+				}
+			}
+			if (cnt_done >= 3) break;
+		}
+
+
+		//all users ended filling their own boards.
+
+		printf("all done\n");
+
+		/************************************************************************/
+
+		for (j = 0; j < num; j++)
+			//tell the clients that all players are ready
+		{
+			send(client_s[j], startcalling, strlen(startcalling), 0);
+		}
+
+
+		while (1)
+		{
+			if (turn > 2)
+				turn = 0; //turn: 0,1,2,0,1,2...
+
+			if ((n = write(client_s[turn], turnmessage, strlen(turnmessage))) > 0)
+			{
+				//tell the turn to that user
+				printf("%dth player's turn-sent the signal.\n", turn + 1);
+			}
+			//waiting->while?
+			if ((n = recv(client_s[turn], message, BUF_SIZE, 0)) > 0)
+			{
+				message[n] = '\0';
+			        //got someting(num from the turn user)?
+				printf("number received from %dth player: %s\n",turn+1,message);
+				
+				//send it to all client..
+				for(j=0;j<num;j++)
+				{
+				 if((n = write(client_s[j],message,strlen(message)))>0)
+					printf("sent %s to %dth client completed\n",message,j);
+				 
+				}
+				while(1){sleep(3);} //BREAKER
+			}
+			
+			/*******************************************************************/
+
+			//next turn?
+			turn++;
+		}
+
+	}//while(1)
+
+
+
+}//main
+//
+
+int str_int(char* num)
+{
+	int k = strlen(num);
+	int digit = 1;
+	int number = 0;
+
+	while (0 < k)
 	{
-		
-		send(players[j].client_s,startgame,strlen(startgame),0);
+		k--;
+		number += ((num[k] - '0') * digit);
+		digit *= 10;
 	}
-	
-while(1){;}				
-	  
+
+	return number;
 }
+
 
 void error_handling(char* message)
 {
-	
-fputs(message,stderr);
-fputc('\n',stderr);
-exit(1);
+
+	fputs(message, stderr);
+	fputc('\n', stderr);
+	exit(1);
 }
 
-int exitCheck(char *rline,char* escape, int len)
+int exitCheck(char* rline, char* escape, int len)
 {
-	int i,max;
-	char *tmp;
+	int i, max;
+	char* tmp;
 
 	max = strlen(rline);
 	tmp = rline;
-	for(i=0;i<max;i++)
+	for (i = 0; i < max; i++)
 	{
-	if(*tmp==escape[0])
+		if (*tmp == escape[0])
 		{
-		if(strncmp(tmp,escape,len)==0)
-			return 1;
+			if (strncmp(tmp, escape, len) == 0)
+				return 1;
 		}
-	else
-		tmp++;
+		else
+			tmp++;
 	}
 	return -1;
-		
-}
 
+}
