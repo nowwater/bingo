@@ -38,6 +38,7 @@ int main(int argc, char* argv[])
 	int cnt_done = 0;
 	int turn = 0;
 	struct timeval timeout;
+	char num_erase[50], num_send[50];
 
 	char* startgame = "game start!\n";
 	char* startcalling = "call the number!\n";
@@ -114,7 +115,7 @@ int main(int argc, char* argv[])
 
 		for (j = 0; j < num; j++)
 		{
-			send(client_s[j], startgame, strlen(startgame), 0);
+			write(client_s[j], startgame, strlen(startgame));
 			//write로 바꾸기&thread 사용하기
 		}
 		memset(message, 0, sizeof(message));
@@ -150,6 +151,7 @@ int main(int argc, char* argv[])
 			//tell the clients that all players are ready
 		{
 			send(client_s[j], startcalling, strlen(startcalling), 0);
+			//sleep(3);
 		}
 
 
@@ -162,11 +164,19 @@ int main(int argc, char* argv[])
 			{
 				printf("%dth player's turn-sent the signal.\n", turn + 1);
 			}
-			//BREAK
-			//while (1) { ; }
-			/*******************************************************************/
+			
+			if ((n = read(client_s[turn], num_erase, strlen(num_erase))) == -1)
+				error_handling("number to erase error");
 
-			//next turn?
+			
+			for (j = 0; j < num; j++)
+			{
+				if ((n = write(client_s[j], num_erase, strlen(num_erase))) > 0)
+				{
+					printf("player %d's number was sent.\n", turn + 1);
+				}
+			}
+
 			turn++;
 		}
 

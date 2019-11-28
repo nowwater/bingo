@@ -81,6 +81,8 @@ void display_message(int startX, int startY, int letterX, int letterY);
 void display_board(int startX, int startY, int row, int col, char* num);
 void erase_notice(int letterX, int letterY);
 void input_number(int startX, int startY, int letterX, int letterY);
+void input_number2(int startX, int startY, int letterX, int letterY);
+void input_number3(int startX, int startY, int letterX, int letterY);
 void ready_to_fight(int letterX, int letterY);
 int str_int(char* num);
 int check(int int_num);
@@ -327,7 +329,7 @@ void play(int y, int x)
 		filled_block++;
 	}
 
-	if ((n = send(sock, donemessage, strlen(donemessage), 0)) > 0)
+	if ((n = write(sock, donemessage, strlen(donemessage))) > 0)
 	{ // tell the server I'm DONE!
 
 		erase_notice(letterX, letterY);
@@ -351,17 +353,24 @@ void play(int y, int x)
 			{
 				//GAME START
 				ready_to_fight(letterX, letterY);
-			}
-
-			else if (strncmp(recvmessage, turnmessage, strlen(recvmessage)) == 0)
-			{
-				//MY TURN?
-				tempscreen();
+				break;
 			}
 		}
-		while (1);
 	}
 
+	while (1)
+	{
+		if ((n = read(sock, recvmessage, BUF_SIZE)) > 0)
+		{
+			recvmessage[n] = '\0';
+			if (strncmp(recvmessage, turnmessage, strlen(recvmessage)) == 0)
+			{
+				erase_notice(letterX, letterY);
+				input_number3(startX, startY, letterX, letterY);
+				//break;
+			}
+		}
+	}
 	close(sock);
 }//all boards set complete
 
@@ -380,7 +389,7 @@ void play(int y, int x)
 void input_number(int startX, int startY, int letterX, int letterY)
 {
 	int row, col, int_num;
-	char num[50];
+	char num[50], num_recv[50];
 	char sendmessage[BUF_SIZE] = "";
 	int n;
 
@@ -585,6 +594,48 @@ void input_number2(int startX, int startY, int letterX, int letterY)
 		{
 			if (board_number[i][j] == int_num)
 			{
+				mvprintw(letterY + 5, letterX, "        "); // erase the input field
+				board_number[i][j] = -1;
+				display_board(startX, startY, i, j, "X");
+
+				return;
+			}
+		}
+	}
+
+	mvprintw(letterY + 5, letterX, "You don't have this number !");
+	refresh();
+	sleep(2);
+	mvprintw(letterY + 5, letterX, "                            "); // erase the input field
+	return;
+
+}
+
+void input_number3(int startX, int startY, int letterX, int letterY)
+{
+	int int_num;
+	char num[50];
+	char num_recv[50];
+	int i, j, n;
+	curs_set(1);
+	echo();
+
+
+	mvscanw(letterY + 5, letterX, "%s", num);
+	int_num = str_int(num);
+
+	for (i = 0; i < 5; i++)
+	{
+		for (j = 0; j < 5; j++)
+		{
+			if (board_number[i][j] == int_num)
+			{
+				if ((n = write(sock, num, strlen(num))) == -1)
+					error_handling("sending number error");
+				
+				if ((n = read(sock, num_recv, strlen(num_recv))) == -1)
+					error_handling("recv number error");
+
 				mvprintw(letterY + 5, letterX, "        "); // erase the input field
 				board_number[i][j] = -1;
 				display_board(startX, startY, i, j, "X");
