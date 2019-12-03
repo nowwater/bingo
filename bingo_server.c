@@ -162,13 +162,18 @@ int main(int argc, char* argv[])
 		}
 	}
 
+	pthread_cancel(number_thread);
 	pthread_join(number_thread, NULL);
 	printf("number_thread_join Done\n");
 
-	for(i=0;i<3;i++)
+	for (i = 0; i < 3; i++)
+	{
+		pthread_cancel(bingo_thread[i]);
 		pthread_join(bingo_thread[i], NULL);
-	printf("bingo_thread[%d] join\n", i + 1);
+		printf("bingo_thread[%d] join\n", i + 1);
+	}
 	
+
 	for (i = 0; i < 3; i++)
 	{
 		close(client_s[i]);
@@ -253,7 +258,7 @@ void* recv_num_to_erase()
 		{
 			if (j == turn) continue;
 			if ((n = write(client_s[j], temp_msg, strlen(temp_msg))) > 0)
-				printf("sent %s to %d client completed\n", temp_msg, j+1);
+				printf("sent %s to %d client completed\n", temp_msg, j + 1);
 		}
 		turn++;
 	}

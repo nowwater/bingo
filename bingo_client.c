@@ -1,3 +1,4 @@
+
 /*
 * compile: gcc client.c -o client -lpthread
 * build: ./client 127.0.0.1 9011
@@ -126,6 +127,8 @@ struct sockaddr_in serv_adr;
 int size;
 int cnt = 0;
 int PORTNUM;
+int quit_sign = 0;
+int win, lose;
 char IP[20];
 
 pthread_t res_thread;
@@ -150,14 +153,14 @@ int main(int argc, char* argv[])
 
 void waitscreen()
 {
-	int i=0;
+	int i = 0;
 
 	clear();
 
 	while (i < 3)
 	{
 		if (i == 0)
-		{	
+		{
 			mvprintw(10, 33, "              ");
 			mvprintw(10, 33, "Please wait.");
 		}
@@ -172,7 +175,7 @@ void waitscreen()
 		{
 			mvprintw(10, 33, "              ");
 			mvprintw(10, 33, "Please wait...");
-			
+
 		}
 		refresh();
 		sleep(1);
@@ -211,14 +214,14 @@ void title()
 		for (j = 0; j < 31; j++)
 		{
 			if (titlename[i][j] == 1)
-				addch('@'|COLOR_PAIR(6));
-			
+				addch('@' | COLOR_PAIR(6));
+
 
 			else
-				addch(' '|COLOR_PAIR(1));
+				addch(' ' | COLOR_PAIR(1));
 		}
 	}
-	
+
 	mvprintw(19, x - 2, "**Made by Korean Bingo Association**");
 	mvprintw(20, x + 9, "Dear Prof. Hong");
 	mvprintw(23, x - 13, "HD.Lee 2016114965  HS.Kwon 2016115613  JH.Shin 2017112110");
@@ -388,7 +391,7 @@ void play(int y, int x)
 
 
 	/* Start to input the number to erase */
-	while ((check = bingo_check()) < 3)//can change bingo number!
+	while ((check = bingo_check()) < 1 && quit_sign == 0 )//can change bingo number!
 	{
 		mvprintw(letterY + 7, letterX, "Your bingo line : %d", check);
 
@@ -424,8 +427,15 @@ void play(int y, int x)
 			// There's nothing changed
 		}
 	}//while
+	if (quit_sign) {
+		if (win) winner_screen(11, 35);
+		if (lose) loser_screen(11, 35);
+		pthread_cancel(res_thread);
+		pthread_join(res_thread, NULL);
+		while (1);
+	}
+	
 	ready_to_bingo(letterX, letterY);
-	pthread_join(res_thread, NULL);
 	clear();
 	endwin();
 	close(sock);
@@ -521,11 +531,11 @@ void display_mainboard(int startX, int startY)
 
 			else if (board_picture[i][j] == 1)
 			{
-				addch('|'| COLOR_PAIR(4));
+				addch('|' | COLOR_PAIR(4));
 			}
 			else if (board_picture[i][j] == 2)
 			{
-				addch('-'| COLOR_PAIR(4));
+				addch('-' | COLOR_PAIR(4));
 			}
 
 		}
@@ -663,14 +673,14 @@ void input_erase_number(int startX, int startY, int letterX, int letterY)
 	int i, j, n;
 	curs_set(1);
 	init_pair(6, COLOR_RED, COLOR_RED);
-
+	if (quit_sign) return;
 	erase_notice(letterX, letterY);
 	display_message2(startX, startY, letterX, letterY);
 	check = bingo_check();
 	mvprintw(letterY + 7, letterX, "Your bingo line : %d", check);
 	refresh();
-
-	while (1)
+	
+	while (quit_sign == 0)
 	{    //clear the buffer
 		echo();
 		memset(num, 0, sizeof(num));
@@ -741,6 +751,7 @@ void ready_to_bingo()
 	char answer[10];
 	char temp_msg[20];
 	clear();
+	if (quit_sign) return;
 	mvprintw(letterY, letterX, "Write \"BINGO\" first!!!!");
 
 	while (1)
@@ -758,15 +769,6 @@ void ready_to_bingo()
 
 	noecho();
 	curs_set(0);
-	while (1)
-	{
-		ch = getch();
-
-		if (ch == 'q' || ch == 'Q')
-		{
-			return;
-		}
-	}
 }
 
 // Check if it is BINGO
@@ -813,9 +815,9 @@ void winner_screen(int letterY, int letterX)
 {
 	curs_set(0);
 	clear();
-	mvprintw(letterY-1, letterX-2,   "*****************");
-	mvprintw(letterY, letterX-2 , "*    YOU WIN!   *");
-	mvprintw(letterY +1, letterX-2,  "*****************");
+	mvprintw(letterY - 1, letterX - 2, "*****************");
+	mvprintw(letterY, letterX - 2, "*    YOU WIN!   *");
+	mvprintw(letterY + 1, letterX - 2, "*****************");
 	mvprintw(LINES - 2, 58, "QUIT : Ctrl + C");
 	refresh();
 }
@@ -824,9 +826,9 @@ void loser_screen(int letterY, int letterX)
 {
 	curs_set(0);
 	clear();
-	mvprintw(letterY - 1, letterX-2, "******************");
-	mvprintw(letterY, letterX-2 , "*    YOU LOSE!   *");
-	mvprintw(letterY + 1, letterX-2, "******************");
+	mvprintw(letterY - 1, letterX - 2, "******************");
+	mvprintw(letterY, letterX - 2, "*    YOU LOSE!   *");
+	mvprintw(letterY + 1, letterX - 2, "******************");
 	mvprintw(LINES - 2, 58, "QUIT : Ctrl + C");
 	refresh();
 }
@@ -839,30 +841,21 @@ void* result_thread()
 	{
 		temp_msg[n] = '\0';
 		refresh();
+		quit_sign = 1;
 
 		if (!strcmp(temp_msg, winner_msg))
 		{
 			winner_screen(11, 35);
-			while (1)
-			{
-				ch = getch();
-
-				if (ch == 'q' || ch == 'Q')
-					return NULL;
-			}
+			win = 1;
+			while (1) sleep(1);
 		}
 		else
 		{
 			loser_screen(11, 35);
-
-			while (1)
-			{
-				ch = getch();
-
-				if (ch == 'q' || ch == 'Q')
-					return NULL;
-			}
+			lose = 1;
+			while (1) sleep(1);
 		}
+		
 	}
 }
 
